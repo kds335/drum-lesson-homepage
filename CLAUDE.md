@@ -65,7 +65,6 @@ Same state machine used for both lesson bookings and practice room bookings.
 ## Known Incomplete / Fragile
 - `ScheduleView.tsx` line 150 — "취소 요청" button is a no-op
 - `app/lessons/page.tsx` `monthlyPackages` — hardcoded dummy data
-- `app/actions/auth.ts` lines 23-28, 65-69 — error detection via `includes()` on Supabase English strings; breaks if Supabase changes message wording
 
 ## Environment Variables (never commit)
 ```

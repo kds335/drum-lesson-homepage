@@ -20,10 +20,10 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
-    if (error.message.includes('Invalid login credentials')) {
+    if (error.code === 'invalid_credentials') {
       return { error: '이메일 또는 비밀번호가 올바르지 않습니다.' }
     }
-    if (error.message.includes('Email not confirmed')) {
+    if (error.code === 'email_not_confirmed') {
       return { error: '이메일 인증이 완료되지 않았습니다. 가입 시 발송된 이메일을 확인해주세요.' }
     }
     return { error: error.message }
@@ -62,10 +62,10 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
   })
 
   if (error) {
-    if (error.message.includes('already registered')) {
+    if (error.code === 'user_already_exists' || error.code === 'email_exists') {
       return { error: '이미 등록된 이메일입니다.' }
     }
-    if (error.message.includes('Signups not allowed')) {
+    if (error.code === 'signup_disabled') {
       return { error: '현재 회원가입이 제한되어 있습니다. 관리자에게 문의해주세요.' }
     }
     return { error: error.message }
