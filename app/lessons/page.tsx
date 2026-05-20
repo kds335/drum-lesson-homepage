@@ -3,6 +3,7 @@ import { Check, ArrowRight, Clock, Users, Wifi } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
 import type { LessonCategory } from '@/lib/types'
+import { monthlyPackages } from '@/lib/packages'
 
 const categoryConfig: Record<LessonCategory, { label: string; icon: React.ElementType; color: string }> = {
   individual: { label: '개인', icon: Users, color: 'indigo' },
@@ -16,29 +17,6 @@ const colorMap: Record<string, string> = {
   emerald: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
 }
 
-const monthlyPackages = [
-  {
-    name: '베이직',
-    sessions: 4,
-    price: 280000,
-    features: ['월 4회 레슨 (주 1회)', '연습실 자유 이용 (월 2회)', '기초 교재 제공', '카카오톡 상담'],
-    highlighted: false,
-  },
-  {
-    name: '스탠다드',
-    sessions: 8,
-    price: 480000,
-    features: ['월 8회 레슨 (주 2회)', '연습실 자유 이용 (무제한)', '교재 제공', '녹음 파일 제공', '카카오톡 상담'],
-    highlighted: true,
-  },
-  {
-    name: '프리미엄',
-    sessions: 12,
-    price: 650000,
-    features: ['월 12회 레슨 (주 3회)', '연습실 자유 이용 (무제한)', '교재 + 악보 제공', '녹음 파일 제공', '1:1 커리큘럼 설계', '우선 예약권'],
-    highlighted: false,
-  },
-]
 
 const curriculum = [
   { level: '입문', duration: '1~2개월', topics: ['올바른 자세와 그립', '기본 스트로크', '단순 박자 익히기', '간단한 리듬 패턴'] },
