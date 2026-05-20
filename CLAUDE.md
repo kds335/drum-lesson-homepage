@@ -36,6 +36,7 @@
 | `lib/booking-stats.ts` | `computeBookingStats(bookings)` |
 | `lib/calendar.ts` | `getDaysInMonth` · `getFirstDayOfMonth` · `toDateString` · `DAYS` |
 | `lib/types.ts` | All types + practice room constants (`PRACTICE_*`) |
+| `lib/packages.ts` | `monthlyPackages` config + `MonthlyPackage` type |
 | `supabase/schema.sql` | Full DB schema — run in Supabase SQL Editor before first use |
 
 ## DB Tables
