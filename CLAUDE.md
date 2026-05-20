@@ -64,7 +64,6 @@ Same state machine used for both lesson bookings and practice room bookings.
 
 ## Known Incomplete / Fragile
 - `ScheduleView.tsx` line 150 — "취소 요청" button is a no-op
-- `app/lessons/page.tsx` `monthlyPackages` — hardcoded dummy data
 
 ## Environment Variables (never commit)
 ```
