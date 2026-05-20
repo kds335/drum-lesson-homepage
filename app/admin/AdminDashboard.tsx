@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Users, Calendar, TrendingUp, Clock, Check, X, Search, ChevronDown } from 'lucide-react'
+import { Users, Calendar, TrendingUp, Clock, Check, X, Search, ChevronDown, Music } from 'lucide-react'
 import { formatDateTime, formatPrice } from '@/lib/utils'
 import { BookingStatusBadge } from '@/components/BookingStatusBadge'
 import { updateBookingStatus } from '@/app/actions/booking'
+import { updatePracticeBookingStatus } from '@/app/actions/practice'
 import { getAllowedTransitions } from '@/lib/booking-status'
 import { computeBookingStats } from '@/lib/booking-stats'
-import type { Booking, Profile, BookingStatus } from '@/lib/types'
+import type { Booking, Profile, BookingStatus, PracticeBooking } from '@/lib/types'
 
 const colorMap: Record<string, string> = {
   indigo: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400',
@@ -16,17 +17,19 @@ const colorMap: Record<string, string> = {
   amber: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400',
 }
 
-type Tab = 'bookings' | 'students'
+type Tab = 'bookings' | 'students' | 'practice'
 
 interface Props {
   bookings: Booking[]
   students: Profile[]
+  practiceBookings: PracticeBooking[]
 }
 
-export function AdminDashboard({ bookings, students }: Props) {
+export function AdminDashboard({ bookings, students, practiceBookings }: Props) {
   const [tab, setTab] = useState<Tab>('bookings')
   const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all')
   const [search, setSearch] = useState('')
+  const [practiceStatusFilter, setPracticeStatusFilter] = useState<BookingStatus | 'all'>('all')
   const [isPending, startTransition] = useTransition()
 
   const stats_data = computeBookingStats(bookings)
@@ -41,6 +44,15 @@ export function AdminDashboard({ bookings, students }: Props) {
   const handleStatusUpdate = (id: string, status: BookingStatus) => {
     startTransition(async () => { await updateBookingStatus(id, status) })
   }
+
+  const handlePracticeStatusUpdate = (id: string, status: BookingStatus) => {
+    startTransition(async () => { await updatePracticeBookingStatus(id, status) })
+  }
+
+  const filteredPractice = practiceBookings.filter(b => {
+    if (practiceStatusFilter !== 'all' && b.status !== practiceStatusFilter) return false
+    return true
+  })
 
   const filtered = bookings.filter(b => {
     if (statusFilter !== 'all' && b.status !== statusFilter) return false
@@ -86,6 +98,12 @@ export function AdminDashboard({ bookings, students }: Props) {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'students' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
           >
             수강생 관리
+          </button>
+          <button
+            onClick={() => setTab('practice')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'practice' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+          >
+            연습실 관리
           </button>
         </div>
 
@@ -251,6 +269,127 @@ export function AdminDashboard({ bookings, students }: Props) {
               })}
             </div>
           </div>
+        )}
+
+        {tab === 'practice' && (
+          <>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Music size={18} className="text-indigo-600 dark:text-indigo-400" />
+                <h3 className="font-semibold text-gray-900 dark:text-white">연습실 예약 내역</h3>
+                <span className="text-sm text-gray-400">총 {filteredPractice.length}건</span>
+              </div>
+              <div className="relative">
+                <select
+                  value={practiceStatusFilter}
+                  onChange={e => setPracticeStatusFilter(e.target.value as BookingStatus | 'all')}
+                  className="appearance-none pl-4 pr-8 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="all">전체 상태</option>
+                  <option value="pending">대기중</option>
+                  <option value="confirmed">확정</option>
+                  <option value="cancelled">취소</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                      <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">예약자</th>
+                      <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">연습실</th>
+                      <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">일시</th>
+                      <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">구분</th>
+                      <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">금액</th>
+                      <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">상태</th>
+                      <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">액션</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
+                    {filteredPractice.map(b => (
+                      <tr key={b.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors ${isPending ? 'opacity-60' : ''}`}>
+                        <td className="px-5 py-4">
+                          <div className="font-medium text-gray-900 dark:text-white text-sm">{b.booker_name}</div>
+                          <div className="text-xs text-gray-400">{b.booker_phone}</div>
+                        </td>
+                        <td className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+                          {b.practice_rooms?.name ?? '-'}
+                        </td>
+                        <td className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {b.date} {String(b.start_hour).padStart(2, '0')}:00~{String(b.end_hour).padStart(2, '0')}:00
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${b.is_member ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+                            {b.is_member ? '회원' : '일반'}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                          {b.amount > 0 ? formatPrice(b.amount) : '무료'}
+                        </td>
+                        <td className="px-5 py-4">
+                          <BookingStatusBadge status={b.status} />
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-1.5">
+                            {getAllowedTransitions(b.status).map(target => (
+                              target === 'confirmed' && b.status === 'pending' ? (
+                                <button
+                                  key={target}
+                                  onClick={() => handlePracticeStatusUpdate(b.id, target)}
+                                  disabled={isPending}
+                                  className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors disabled:opacity-40"
+                                  title="확정"
+                                >
+                                  <Check size={14} />
+                                </button>
+                              ) : target === 'cancelled' && b.status === 'pending' ? (
+                                <button
+                                  key={target}
+                                  onClick={() => handlePracticeStatusUpdate(b.id, target)}
+                                  disabled={isPending}
+                                  className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-40"
+                                  title="취소"
+                                >
+                                  <X size={14} />
+                                </button>
+                              ) : target === 'cancelled' ? (
+                                <button
+                                  key={target}
+                                  onClick={() => handlePracticeStatusUpdate(b.id, target)}
+                                  disabled={isPending}
+                                  className="text-xs text-red-500 hover:text-red-600 font-medium disabled:opacity-40"
+                                >
+                                  취소
+                                </button>
+                              ) : (
+                                <button
+                                  key={target}
+                                  onClick={() => handlePracticeStatusUpdate(b.id, target)}
+                                  disabled={isPending}
+                                  className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 font-medium disabled:opacity-40"
+                                >
+                                  복구
+                                </button>
+                              )
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {filteredPractice.length === 0 && (
+                  <div className="text-center py-12 text-gray-400">
+                    <Music size={32} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">해당하는 연습실 예약이 없습니다</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
         )}
 
         <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5">

@@ -180,3 +180,102 @@ insert into schedules (day_of_week, start_time, end_time) values
   (6, '10:00', '11:00'), (6, '11:00', '12:00'), (6, '13:00', '14:00'),
   (6, '14:00', '15:00'), (6, '15:00', '16:00')
 on conflict do nothing;
+
+-- ===================================================
+-- 연습실 (Practice Rooms)
+-- ===================================================
+
+-- 5. 연습실 테이블
+create table if not exists practice_rooms (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  type text not null check (type in ('electronic', 'acoustic')),
+  is_active boolean not null default true,
+  created_at timestamptz default now() not null
+);
+
+-- 6. 연습실 예약 테이블
+create table if not exists practice_bookings (
+  id uuid default gen_random_uuid() primary key,
+  room_id uuid references practice_rooms(id) on delete cascade not null,
+  date date not null,
+  start_hour smallint not null check (start_hour between 9 and 20),
+  end_hour smallint not null check (end_hour between 10 and 21),
+  booker_name text not null,
+  booker_phone text not null,
+  user_id uuid references profiles(id) on delete set null,
+  is_member boolean not null default false,
+  status text not null default 'pending' check (status in ('pending', 'confirmed', 'cancelled')),
+  amount integer not null default 0,
+  created_at timestamptz default now() not null,
+  check (end_hour = start_hour + 1)
+);
+
+create index if not exists practice_bookings_date_room_idx
+  on practice_bookings (date, room_id) where status <> 'cancelled';
+create index if not exists practice_bookings_user_date_idx
+  on practice_bookings (user_id, date) where status <> 'cancelled';
+
+alter table practice_rooms enable row level security;
+alter table practice_bookings enable row level security;
+
+-- 연습실 정책
+drop policy if exists "anyone can view active rooms" on practice_rooms;
+create policy "anyone can view active rooms" on practice_rooms
+  for select using (true);
+
+drop policy if exists "admins can manage rooms" on practice_rooms;
+create policy "admins can manage rooms" on practice_rooms
+  for all using (get_user_role() = 'admin');
+
+-- 연습실 예약 정책
+drop policy if exists "users can view own practice bookings" on practice_bookings;
+create policy "users can view own practice bookings" on practice_bookings
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "admins can view all practice bookings" on practice_bookings;
+create policy "admins can view all practice bookings" on practice_bookings
+  for select using (get_user_role() = 'admin');
+
+drop policy if exists "anyone can create practice bookings" on practice_bookings;
+create policy "anyone can create practice bookings" on practice_bookings
+  for insert with check (true);
+
+drop policy if exists "admins can update practice bookings" on practice_bookings;
+create policy "admins can update practice bookings" on practice_bookings
+  for update using (get_user_role() = 'admin');
+
+-- 슬롯 점유 조회 RPC (PII 노출 방지)
+create or replace function public.get_practice_slots(p_date date)
+returns table (
+  room_id uuid,
+  start_hour smallint,
+  end_hour smallint,
+  status text
+) as $$
+  select room_id, start_hour, end_hour, status
+  from public.practice_bookings
+  where date = p_date and status <> 'cancelled'
+$$ language sql security definer stable;
+
+grant execute on function public.get_practice_slots(date) to anon, authenticated;
+
+-- 회원 일일 예약 시간 카운트 RPC (서버 액션용)
+create or replace function public.count_member_practice_hours(p_user_id uuid, p_date date)
+returns integer as $$
+  select coalesce(count(*)::integer, 0)
+  from public.practice_bookings
+  where user_id = p_user_id
+    and date = p_date
+    and status <> 'cancelled'
+$$ language sql security definer stable;
+
+grant execute on function public.count_member_practice_hours(uuid, date) to authenticated;
+
+-- 연습실 초기 데이터 (4개 룸)
+insert into practice_rooms (name, type) values
+  ('1번 전자드럼', 'electronic'),
+  ('2번 전자드럼', 'electronic'),
+  ('3번 어쿠스틱', 'acoustic'),
+  ('4번 어쿠스틱', 'acoustic')
+on conflict do nothing;

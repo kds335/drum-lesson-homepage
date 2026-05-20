@@ -13,6 +13,7 @@ const navLinks = [
   { href: '/', label: '홈' },
   { href: '/lessons', label: '레슨 소개' },
   { href: '/booking', label: '레슨 예약' },
+  { href: '/practice', label: '연습실 예약' },
   { href: '/schedule', label: '내 일정' },
   { href: '/contact', label: '오시는 길' },
 ]

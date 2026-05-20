@@ -50,3 +50,43 @@ export interface Schedule {
   is_available: boolean
   created_at: string
 }
+
+export type PracticeRoomType = 'electronic' | 'acoustic'
+
+export type PracticeBookingStatus = 'pending' | 'confirmed' | 'cancelled'
+
+export interface PracticeRoom {
+  id: string
+  name: string
+  type: PracticeRoomType
+  is_active: boolean
+  created_at: string
+}
+
+export interface PracticeBooking {
+  id: string
+  room_id: string
+  date: string
+  start_hour: number
+  end_hour: number
+  booker_name: string
+  booker_phone: string
+  user_id: string | null
+  is_member: boolean
+  status: PracticeBookingStatus
+  amount: number
+  created_at: string
+  practice_rooms?: PracticeRoom
+}
+
+export interface PracticeSlot {
+  room_id: string
+  start_hour: number
+  end_hour: number
+  status: PracticeBookingStatus
+}
+
+export const PRACTICE_HOURLY_RATE = 20000
+export const PRACTICE_MEMBER_DAILY_LIMIT = 2
+export const PRACTICE_OPEN_HOUR = 9
+export const PRACTICE_CLOSE_HOUR = 21
