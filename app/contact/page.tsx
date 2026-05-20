@@ -1,6 +1,12 @@
-import { Phone, Mail, MapPin, Clock, Share2, PlayCircle } from 'lucide-react'
+'use client'
+
+import { useActionState } from 'react'
+import { Phone, Mail, MapPin, Clock, Share2, PlayCircle, Loader2, CheckCircle } from 'lucide-react'
+import { submitContact } from '@/app/actions/contact'
 
 export default function ContactPage() {
+  const [state, action, pending] = useActionState(submitContact, undefined)
+
   return (
     <div className="py-16">
       <div className="max-w-6xl mx-auto px-4">
@@ -96,40 +102,97 @@ export default function ContactPage() {
             {/* Quick Contact Form */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">빠른 문의</h2>
-              <form className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">이름</label>
-                    <input
-                      type="text"
-                      placeholder="홍길동"
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">연락처</label>
-                    <input
-                      type="tel"
-                      placeholder="010-0000-0000"
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
-                  </div>
+
+              {state?.success ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-3 text-center">
+                  <CheckCircle className="text-green-500" size={40} />
+                  <p className="font-semibold text-gray-900 dark:text-white">문의가 접수되었습니다!</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">빠른 시일 내에 연락드리겠습니다.</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">문의 내용</label>
-                  <textarea
-                    rows={4}
-                    placeholder="궁금한 점을 자유롭게 작성해주세요"
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+              ) : (
+                <form action={action} className="space-y-4">
+                  {/* Honeypot — hidden from real users, bots fill it */}
+                  <input
+                    type="text"
+                    name="website"
+                    className="absolute opacity-0 -top-[9999px] -left-[9999px]"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
                   />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors"
-                >
-                  문의 보내기
-                </button>
-              </form>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        이름 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        required
+                        placeholder="홍길동"
+                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                        연락처 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        required
+                        placeholder="010-0000-0000"
+                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                      이메일 <span className="text-gray-400 text-xs font-normal">(선택)</span>
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="example@email.com"
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                      문의 내용 <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      rows={4}
+                      required
+                      placeholder="궁금한 점을 자유롭게 작성해주세요"
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                    />
+                  </div>
+
+                  {state?.error && (
+                    <div className="px-3 py-2.5 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800">
+                      <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
+                  >
+                    {pending && <Loader2 size={16} className="animate-spin" />}
+                    문의 보내기
+                  </button>
+                </form>
+              )}
             </div>
           </div>
 

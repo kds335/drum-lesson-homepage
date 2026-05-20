@@ -272,6 +272,31 @@ $$ language sql security definer stable;
 
 grant execute on function public.count_member_practice_hours(uuid, date) to authenticated;
 
+-- ===================================================
+-- 문의 (Contacts)
+-- ===================================================
+
+-- 7. 문의 테이블
+create table if not exists contacts (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  phone text not null,
+  email text,
+  message text not null,
+  status text not null default 'new' check (status in ('new', 'read', 'replied')),
+  created_at timestamptz default now() not null
+);
+
+alter table contacts enable row level security;
+
+drop policy if exists "anyone can insert contacts" on contacts;
+create policy "anyone can insert contacts" on contacts
+  for insert with check (true);
+
+drop policy if exists "admins can manage contacts" on contacts;
+create policy "admins can manage contacts" on contacts
+  for all using (get_user_role() = 'admin');
+
 -- 연습실 초기 데이터 (4개 룸)
 insert into practice_rooms (name, type) values
   ('1번 전자드럼', 'electronic'),
