@@ -30,9 +30,3 @@ export function formatDateTime(date: string | Date): string {
     hourCycle: 'h23',
   }).format(new Date(date))
 }
-
-export const DAYS_KO = ['일', '월', '화', '수', '목', '금', '토']
-
-export function getDayName(dayOfWeek: number): string {
-  return DAYS_KO[dayOfWeek] ?? ''
-}

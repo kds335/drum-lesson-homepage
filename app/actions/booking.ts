@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { canTransitionTo } from '@/lib/booking-status'
+import { validateBookingInput } from '@/lib/validators'
 import type { BookingStatus } from '@/lib/types'
 
 export interface CreateBookingInput {
@@ -19,15 +20,9 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingA
 
   if (!user) return { error: '로그인이 필요합니다.' }
 
-  if (new Date(input.scheduledAt) < new Date()) {
-    return { error: '과거 날짜는 예약할 수 없습니다.' }
-  }
-
-  const dt = new Date(input.scheduledAt)
-  const dayOfWeek = dt.getDay()
-  if (dayOfWeek === 0) return { error: '일요일은 예약할 수 없습니다.' }
-
-  const startTime = input.scheduledAt.slice(11, 16)
+  const validation = validateBookingInput(input)
+  if (!validation.ok) return { error: validation.error }
+  const { dayOfWeek, startTime } = validation
 
   const [{ data: slot }, { data: existing }] = await Promise.all([
     supabase

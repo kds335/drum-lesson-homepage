@@ -3,12 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { canTransitionTo } from '@/lib/booking-status'
-import {
-  PRACTICE_HOURLY_RATE,
-  PRACTICE_MEMBER_DAILY_LIMIT,
-  PRACTICE_OPEN_HOUR,
-  PRACTICE_CLOSE_HOUR,
-} from '@/lib/types'
+import { validatePracticeInput } from '@/lib/validators'
+import { PRACTICE_HOURLY_RATE, PRACTICE_MEMBER_DAILY_LIMIT } from '@/lib/types'
 import type { BookingStatus, PracticeBookingStatus } from '@/lib/types'
 
 export interface CreatePracticeBookingInput {
@@ -24,31 +20,14 @@ export type PracticeActionResult = { error?: string; success?: boolean }
 export async function createPracticeBooking(
   input: CreatePracticeBookingInput
 ): Promise<PracticeActionResult> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const validation = validatePracticeInput(input)
+  if (!validation.ok) return { error: validation.error }
+  const { name, phone, endHour } = validation
 
-  const name = input.bookerName.trim()
-  const phone = input.bookerPhone.trim()
-
-  if (!name || name.length < 2) return { error: '이름을 정확히 입력해주세요.' }
-  if (!phone) return { error: '연락처를 입력해주세요.' }
-  if (!input.roomId) return { error: '연습실을 선택해주세요.' }
-  if (
-    !Number.isInteger(input.startHour) ||
-    input.startHour < PRACTICE_OPEN_HOUR ||
-    input.startHour >= PRACTICE_CLOSE_HOUR
-  ) {
-    return { error: '운영 시간 외의 시간입니다.' }
-  }
-
-  const endHour = input.startHour + 1
   const dateStr = input.date
 
-  const slotStart = new Date(
-    `${dateStr}T${String(input.startHour).padStart(2, '0')}:00:00`
-  )
-  if (Number.isNaN(slotStart.getTime())) return { error: '잘못된 날짜입니다.' }
-  if (slotStart < new Date()) return { error: '지난 시간은 예약할 수 없습니다.' }
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { data: room } = await supabase
     .from('practice_rooms')

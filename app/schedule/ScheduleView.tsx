@@ -194,7 +194,7 @@ export function ScheduleView({ userName, bookings }: Props) {
                           {new Date(b.scheduled_at).getDate()}
                         </span>
                         <span className="text-[10px] text-indigo-400">
-                          {['일', '월', '화', '수', '목', '금', '토'][new Date(b.scheduled_at).getDay()]}
+                          {DAYS[new Date(b.scheduled_at).getDay()]}
                         </span>
                       </div>
                       <div>
