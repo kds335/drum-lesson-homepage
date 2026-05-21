@@ -29,3 +29,16 @@ export const practiceBookingStateMachine = createStateMachine<PracticeBookingSta
   confirmed: ['cancelled'],
   cancelled: ['confirmed'],
 })
+
+export type TransitionIntent = 'confirm' | 'cancel' | 'restore'
+
+export interface TransitionDescriptor {
+  label: string
+  intent: TransitionIntent
+}
+
+export function getTransitionDescriptor(from: string, to: string): TransitionDescriptor {
+  if (from === 'cancelled' && to === 'confirmed') return { label: '복구', intent: 'restore' }
+  if (to === 'confirmed') return { label: '확정', intent: 'confirm' }
+  return { label: '취소', intent: 'cancel' }
+}

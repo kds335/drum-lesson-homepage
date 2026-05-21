@@ -8,7 +8,7 @@ import { updateBookingStatus } from '@/app/actions/booking'
 import { updatePracticeBookingStatus } from '@/app/actions/practice'
 import { updateContactStatus } from '@/app/actions/contact'
 import { createPackage, updatePackage, deletePackage, setHighlightedPackage } from '@/app/actions/packages'
-import { lessonBookingStateMachine, practiceBookingStateMachine } from '@/lib/booking-status'
+import { lessonBookingStateMachine, practiceBookingStateMachine, getTransitionDescriptor } from '@/lib/booking-status'
 import { computeBookingStats } from '@/lib/booking-stats'
 import type { Booking, Profile, BookingStatus, PracticeBooking, Contact, ContactStatus, MonthlyPackage } from '@/lib/types'
 
@@ -238,47 +238,29 @@ export function AdminDashboard({ bookings, students, practiceBookings, contacts,
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-1.5">
-                            {lessonBookingStateMachine.getAllowedTransitions(booking.status).map(target => (
-                              target === 'confirmed' && booking.status === 'pending' ? (
+                            {lessonBookingStateMachine.getAllowedTransitions(booking.status).map(target => {
+                              const { label, intent } = getTransitionDescriptor(booking.status, target)
+                              return booking.status === 'pending' ? (
                                 <button
                                   key={target}
                                   onClick={() => handleStatusUpdate(booking.id, target)}
                                   disabled={isPending}
-                                  className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors disabled:opacity-40"
-                                  title="확정"
+                                  className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${intent === 'confirm' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'}`}
+                                  title={label}
                                 >
-                                  <Check size={14} />
-                                </button>
-                              ) : target === 'cancelled' && booking.status === 'pending' ? (
-                                <button
-                                  key={target}
-                                  onClick={() => handleStatusUpdate(booking.id, target)}
-                                  disabled={isPending}
-                                  className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-40"
-                                  title="취소"
-                                >
-                                  <X size={14} />
-                                </button>
-                              ) : target === 'cancelled' ? (
-                                <button
-                                  key={target}
-                                  onClick={() => handleStatusUpdate(booking.id, target)}
-                                  disabled={isPending}
-                                  className="text-xs text-red-500 hover:text-red-600 font-medium disabled:opacity-40"
-                                >
-                                  취소
+                                  {intent === 'confirm' ? <Check size={14} /> : <X size={14} />}
                                 </button>
                               ) : (
                                 <button
                                   key={target}
                                   onClick={() => handleStatusUpdate(booking.id, target)}
                                   disabled={isPending}
-                                  className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 font-medium disabled:opacity-40"
+                                  className={`text-xs font-medium disabled:opacity-40 ${intent === 'cancel' ? 'text-red-500 hover:text-red-600' : 'text-green-600 dark:text-green-400 hover:text-green-700'}`}
                                 >
-                                  복구
+                                  {label}
                                 </button>
                               )
-                            ))}
+                            })}
                           </div>
                         </td>
                       </tr>
@@ -402,47 +384,29 @@ export function AdminDashboard({ bookings, students, practiceBookings, contacts,
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-1.5">
-                            {practiceBookingStateMachine.getAllowedTransitions(b.status).map(target => (
-                              target === 'confirmed' && b.status === 'pending' ? (
+                            {practiceBookingStateMachine.getAllowedTransitions(b.status).map(target => {
+                              const { label, intent } = getTransitionDescriptor(b.status, target)
+                              return b.status === 'pending' ? (
                                 <button
                                   key={target}
                                   onClick={() => handlePracticeStatusUpdate(b.id, target)}
                                   disabled={isPending}
-                                  className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors disabled:opacity-40"
-                                  title="확정"
+                                  className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${intent === 'confirm' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'}`}
+                                  title={label}
                                 >
-                                  <Check size={14} />
-                                </button>
-                              ) : target === 'cancelled' && b.status === 'pending' ? (
-                                <button
-                                  key={target}
-                                  onClick={() => handlePracticeStatusUpdate(b.id, target)}
-                                  disabled={isPending}
-                                  className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-40"
-                                  title="취소"
-                                >
-                                  <X size={14} />
-                                </button>
-                              ) : target === 'cancelled' ? (
-                                <button
-                                  key={target}
-                                  onClick={() => handlePracticeStatusUpdate(b.id, target)}
-                                  disabled={isPending}
-                                  className="text-xs text-red-500 hover:text-red-600 font-medium disabled:opacity-40"
-                                >
-                                  취소
+                                  {intent === 'confirm' ? <Check size={14} /> : <X size={14} />}
                                 </button>
                               ) : (
                                 <button
                                   key={target}
                                   onClick={() => handlePracticeStatusUpdate(b.id, target)}
                                   disabled={isPending}
-                                  className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 font-medium disabled:opacity-40"
+                                  className={`text-xs font-medium disabled:opacity-40 ${intent === 'cancel' ? 'text-red-500 hover:text-red-600' : 'text-green-600 dark:text-green-400 hover:text-green-700'}`}
                                 >
-                                  복구
+                                  {label}
                                 </button>
                               )
-                            ))}
+                            })}
                           </div>
                         </td>
                       </tr>
