@@ -2,8 +2,7 @@ import Link from 'next/link'
 import { Check, ArrowRight, Clock, Users, Wifi } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { formatPrice } from '@/lib/utils'
-import type { LessonCategory } from '@/lib/types'
-import { monthlyPackages } from '@/lib/packages'
+import type { LessonCategory, MonthlyPackage } from '@/lib/types'
 
 const categoryConfig: Record<LessonCategory, { label: string; icon: React.ElementType; color: string }> = {
   individual: { label: '개인', icon: Users, color: 'indigo' },
@@ -27,7 +26,11 @@ const curriculum = [
 
 export default async function LessonsPage() {
   const supabase = await createClient()
-  const { data: lessons } = await supabase.from('lessons').select('*').order('price')
+  const [{ data: lessons }, { data: packagesData }] = await Promise.all([
+    supabase.from('lessons').select('*').order('price'),
+    supabase.from('monthly_packages').select('*').order('price'),
+  ])
+  const monthlyPackages = (packagesData ?? []) as MonthlyPackage[]
 
   return (
     <div className="py-16">
@@ -75,6 +78,7 @@ export default async function LessonsPage() {
         </section>
 
         {/* Monthly Packages */}
+        {monthlyPackages.length > 0 && (
         <section className="mb-20">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">월정액 패키지</h2>
           <p className="text-gray-500 dark:text-gray-400 mb-8">월정액으로 더 알뜰하게!</p>
@@ -124,6 +128,7 @@ export default async function LessonsPage() {
             ))}
           </div>
         </section>
+        )}
 
         {/* Curriculum */}
         <section className="mb-16">

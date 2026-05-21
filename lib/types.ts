@@ -91,6 +91,16 @@ export const PRACTICE_MEMBER_DAILY_LIMIT = 2
 export const PRACTICE_OPEN_HOUR = 9
 export const PRACTICE_CLOSE_HOUR = 21
 
+export interface MonthlyPackage {
+  id: string
+  name: string
+  sessions: number
+  price: number
+  features: string[]
+  highlighted: boolean
+  created_at: string
+}
+
 export type ContactStatus = 'new' | 'read' | 'replied'
 
 export interface Contact {
