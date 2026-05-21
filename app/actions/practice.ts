@@ -1,10 +1,10 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { requireAdmin } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { practiceBookingStateMachine } from '@/lib/booking-status'
 import { validatePracticeInput } from '@/lib/validators'
+import { updateRecordStatus } from '@/lib/record-status-action'
 import { PRACTICE_HOURLY_RATE, PRACTICE_MEMBER_DAILY_LIMIT } from '@/lib/types'
 import type { PracticeBookingStatus } from '@/lib/types'
 
@@ -92,28 +92,11 @@ export async function updatePracticeBookingStatus(
   id: string,
   status: PracticeBookingStatus
 ): Promise<PracticeActionResult> {
-  const { supabase } = await requireAdmin()
-
-  const { data: booking } = await supabase
-    .from('practice_bookings')
-    .select('status')
-    .eq('id', id)
-    .single()
-
-  if (!booking) return { error: '예약을 찾을 수 없습니다.' }
-
-  if (!practiceBookingStateMachine.canTransitionTo(booking.status as PracticeBookingStatus, status)) {
-    return { error: '허용되지 않는 상태 변경입니다.' }
-  }
-
-  const { error } = await supabase
-    .from('practice_bookings')
-    .update({ status })
-    .eq('id', id)
-
-  if (error) return { error: '상태 업데이트 중 오류가 발생했습니다.' }
-
-  revalidatePath('/admin')
-  revalidatePath('/practice')
-  return { success: true }
+  return updateRecordStatus({
+    table: 'practice_bookings',
+    id,
+    nextStatus: status,
+    stateMachine: practiceBookingStateMachine,
+    revalidatePaths: ['/admin', '/practice'],
+  })
 }

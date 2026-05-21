@@ -8,7 +8,7 @@ import { updateBookingStatus } from '@/app/actions/booking'
 import { updatePracticeBookingStatus } from '@/app/actions/practice'
 import { updateContactStatus } from '@/app/actions/contact'
 import { createPackage, updatePackage, deletePackage, setHighlightedPackage } from '@/app/actions/packages'
-import { lessonBookingStateMachine, practiceBookingStateMachine, getTransitionDescriptor } from '@/lib/booking-status'
+import { lessonBookingStateMachine, practiceBookingStateMachine, getTransitionDescriptor, contactStateMachine, contactTransitionLabels } from '@/lib/booking-status'
 import { computeBookingStats } from '@/lib/booking-stats'
 import type { Booking, Profile, BookingStatus, PracticeBooking, Contact, ContactStatus, MonthlyPackage } from '@/lib/types'
 
@@ -33,10 +33,6 @@ const contactStatusClass: Record<ContactStatus, string> = {
   replied: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
 }
 
-const contactNextStatus: Partial<Record<ContactStatus, { next: ContactStatus; label: string }>> = {
-  new: { next: 'read', label: '읽음' },
-  read: { next: 'replied', label: '답변완료' },
-}
 
 interface Props {
   bookings: Booking[]
@@ -448,7 +444,6 @@ export function AdminDashboard({ bookings, students, practiceBookings, contacts,
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
                   {contacts.map(contact => {
-                    const next = contactNextStatus[contact.status]
                     return (
                       <tr key={contact.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors ${isPending ? 'opacity-60' : ''}`}>
                         <td className="px-5 py-4 font-medium text-gray-900 dark:text-white text-sm whitespace-nowrap">{contact.name}</td>
@@ -466,15 +461,18 @@ export function AdminDashboard({ bookings, students, practiceBookings, contacts,
                           {contact.created_at.slice(0, 10)}
                         </td>
                         <td className="px-5 py-4">
-                          {next && (
-                            <button
-                              onClick={() => handleContactStatusUpdate(contact.id, next.next)}
-                              disabled={isPending}
-                              className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors disabled:opacity-40"
-                            >
-                              {next.label}
-                            </button>
-                          )}
+                          <div className="flex items-center gap-1.5">
+                            {contactStateMachine.getAllowedTransitions(contact.status).map(target => (
+                              <button
+                                key={target}
+                                onClick={() => handleContactStatusUpdate(contact.id, target)}
+                                disabled={isPending}
+                                className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors disabled:opacity-40"
+                              >
+                                {contactTransitionLabels[target] ?? target}
+                              </button>
+                            ))}
+                          </div>
                         </td>
                       </tr>
                     )

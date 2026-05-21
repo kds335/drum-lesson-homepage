@@ -1,10 +1,10 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { requireAdmin } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { lessonBookingStateMachine } from '@/lib/booking-status'
 import { validateBookingInput } from '@/lib/validators'
+import { updateRecordStatus } from '@/lib/record-status-action'
 import type { BookingStatus } from '@/lib/types'
 
 export interface CreateBookingInput {
@@ -59,29 +59,13 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingA
 }
 
 export async function updateBookingStatus(id: string, status: BookingStatus): Promise<BookingActionResult> {
-  const { supabase } = await requireAdmin()
-
-  const { data: booking } = await supabase
-    .from('bookings')
-    .select('status')
-    .eq('id', id)
-    .single()
-
-  if (!booking) return { error: '예약을 찾을 수 없습니다.' }
-  if (!lessonBookingStateMachine.canTransitionTo(booking.status as BookingStatus, status)) {
-    return { error: '허용되지 않는 상태 변경입니다.' }
-  }
-
-  const { error } = await supabase
-    .from('bookings')
-    .update({ status })
-    .eq('id', id)
-
-  if (error) return { error: '상태 업데이트 중 오류가 발생했습니다.' }
-
-  revalidatePath('/admin')
-  revalidatePath('/schedule')
-  return { success: true }
+  return updateRecordStatus({
+    table: 'bookings',
+    id,
+    nextStatus: status,
+    stateMachine: lessonBookingStateMachine,
+    revalidatePaths: ['/admin', '/schedule'],
+  })
 }
 
 export async function requestCancellation(id: string): Promise<BookingActionResult> {

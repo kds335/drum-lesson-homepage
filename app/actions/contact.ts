@@ -1,9 +1,10 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { requireAdmin } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { Resend } from 'resend'
+import { contactStateMachine } from '@/lib/booking-status'
+import { updateRecordStatus } from '@/lib/record-status-action'
 import type { ContactStatus } from '@/lib/types'
 
 export type ContactState = { error?: string; success?: boolean } | undefined
@@ -78,16 +79,12 @@ export async function submitContact(prevState: ContactState, formData: FormData)
   return { success: true }
 }
 
-export async function updateContactStatus(id: string, status: ContactStatus): Promise<{ error?: string }> {
-  const { supabase } = await requireAdmin()
-
-  const { error } = await supabase
-    .from('contacts')
-    .update({ status })
-    .eq('id', id)
-
-  if (error) return { error: '상태 업데이트 중 오류가 발생했습니다.' }
-
-  revalidatePath('/admin')
-  return {}
+export async function updateContactStatus(id: string, status: ContactStatus): Promise<{ error?: string; success?: boolean }> {
+  return updateRecordStatus({
+    table: 'contacts',
+    id,
+    nextStatus: status,
+    stateMachine: contactStateMachine,
+    revalidatePaths: ['/admin'],
+  })
 }
