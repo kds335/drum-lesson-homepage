@@ -33,17 +33,19 @@
 | `app/actions/booking.ts` | `createBooking` (server-validated) · `updateBookingStatus` |
 | `app/actions/practice.ts` | `createPracticeBooking` · `updatePracticeBookingStatus` |
 | `app/actions/contact.ts` | `submitContact` — honeypot, saves to `contacts` table, sends via Resend |
+| `app/actions/packages.ts` | `createPackage` · `updatePackage` · `deletePackage` · `setHighlightedPackage` |
+| `lib/packages-repo.ts` | `monthlyPackagesRepo` — all DB access for `monthly_packages` table |
+| `lib/parse-features.ts` | `parseFeaturesInput(raw)` — textarea string → `string[]` (pure fn) |
 | `app/auth/callback/route.ts` | Email verification callback |
 | `lib/auth.ts` | `requireAuth(next?)` · `requireAdmin()` |
-| `lib/booking-status.ts` | Status state machine — `canTransitionTo` · `ALLOWED_TRANSITIONS` |
+| `lib/booking-status.ts` | Generic state machine factory + `lessonBookingStateMachine` · `practiceBookingStateMachine` |
 | `lib/booking-stats.ts` | `computeBookingStats(bookings)` |
 | `lib/calendar.ts` | `getDaysInMonth` · `getFirstDayOfMonth` · `toDateString` · `DAYS` |
-| `lib/types.ts` | All types + practice room constants (`PRACTICE_*`) |
-| `lib/packages.ts` | `monthlyPackages` config + `MonthlyPackage` type |
+| `lib/types.ts` | All types incl. `MonthlyPackage` + practice room constants (`PRACTICE_*`) |
 | `supabase/schema.sql` | Full DB schema — run in Supabase SQL Editor before first use |
 
 ## DB Tables
-`profiles` · `lessons` · `schedules` · `bookings` · `practice_rooms` · `practice_bookings`
+`profiles` · `lessons` · `schedules` · `bookings` · `practice_rooms` · `practice_bookings` · `monthly_packages`
 — All tables have RLS enabled. Admin check via `get_user_role()`.
 
 ## Supabase Client Rules
@@ -65,9 +67,6 @@ Same state machine used for both lesson bookings and practice room bookings.
 - Non-member: `amount = 20,000 KRW`
 - Member (logged in): free (`amount = 0`), max 2 hrs/day
 - Slot availability via RPC `get_practice_slots(date)` — no PII exposed
-
-## Known Incomplete / Fragile
-- `ScheduleView.tsx` line 150 — "취소 요청" button is a no-op
 
 ## Environment Variables (never commit)
 ```
