@@ -76,3 +76,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 RESEND_API_KEY=
 CONTACT_EMAIL=
 ```
+
+## remind.md Maintenance
+After completing any task:
+1. Remove the item from "Incomplete Features" or "Priority TODO" in remind.md if it is now done
+2. Add any new known issues or fragile points discovered during the work
+3. Keep remind.md reflecting current actual state — not historical record
+
+Do not add this as a reminder to do manually — update remind.md as part of every task completion.
