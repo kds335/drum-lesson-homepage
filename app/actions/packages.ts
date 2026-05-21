@@ -2,14 +2,14 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/auth'
-import { monthlyPackagesRepo } from '@/lib/packages-repo'
 import { parseFeaturesInput } from '@/lib/parse-features'
+import { highlightPackage } from '@/lib/highlight-package'
 
 export async function createPackage(
   _prevState: string | null,
   formData: FormData,
 ): Promise<string | null> {
-  await requireAdmin()
+  const { supabase } = await requireAdmin()
 
   const name = ((formData.get('name') as string) ?? '').trim()
   const sessionsRaw = (formData.get('sessions') as string) ?? ''
@@ -26,11 +26,10 @@ export async function createPackage(
 
   const features = parseFeaturesInput(featuresRaw)
 
-  try {
-    await monthlyPackagesRepo.create({ name, sessions, price, features })
-  } catch {
-    return '패키지 생성에 실패했습니다'
-  }
+  const { error } = await supabase
+    .from('monthly_packages')
+    .insert({ name, sessions, price, features, highlighted: false })
+  if (error) return '패키지 생성에 실패했습니다'
 
   revalidatePath('/lessons')
   revalidatePath('/admin')
@@ -41,7 +40,7 @@ export async function updatePackage(
   _prevState: string | null,
   formData: FormData,
 ): Promise<string | null> {
-  await requireAdmin()
+  const { supabase } = await requireAdmin()
 
   const id = ((formData.get('id') as string) ?? '').trim()
   if (!id) return '패키지 ID가 없습니다'
@@ -61,11 +60,11 @@ export async function updatePackage(
 
   const features = parseFeaturesInput(featuresRaw)
 
-  try {
-    await monthlyPackagesRepo.update(id, { name, sessions, price, features })
-  } catch {
-    return '패키지 수정에 실패했습니다'
-  }
+  const { error } = await supabase
+    .from('monthly_packages')
+    .update({ name, sessions, price, features })
+    .eq('id', id)
+  if (error) return '패키지 수정에 실패했습니다'
 
   revalidatePath('/lessons')
   revalidatePath('/admin')
@@ -73,15 +72,16 @@ export async function updatePackage(
 }
 
 export async function deletePackage(id: string): Promise<void> {
-  await requireAdmin()
-  await monthlyPackagesRepo.delete(id)
+  const { supabase } = await requireAdmin()
+  const { error } = await supabase.from('monthly_packages').delete().eq('id', id)
+  if (error) throw error
   revalidatePath('/lessons')
   revalidatePath('/admin')
 }
 
 export async function setHighlightedPackage(id: string): Promise<void> {
-  await requireAdmin()
-  await monthlyPackagesRepo.setHighlighted(id)
+  const { supabase } = await requireAdmin()
+  await highlightPackage({ supabase, id })
   revalidatePath('/lessons')
   revalidatePath('/admin')
 }

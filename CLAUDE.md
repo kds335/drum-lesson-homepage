@@ -34,7 +34,9 @@
 | `app/actions/practice.ts` | `createPracticeBooking` · `updatePracticeBookingStatus` |
 | `app/actions/contact.ts` | `submitContact` — honeypot, saves to `contacts` table, sends via Resend |
 | `app/actions/packages.ts` | `createPackage` · `updatePackage` · `deletePackage` · `setHighlightedPackage` |
-| `lib/packages-repo.ts` | `monthlyPackagesRepo` — all DB access for `monthly_packages` table |
+| `lib/highlight-package.ts` | `highlightPackage` — only-one-highlighted invariant for `monthly_packages` |
+| `lib/booking-intake.ts` | `admitLessonBooking` · `admitPracticeBooking` — all booking admission (pure + DB) |
+| `lib/record-status-action.ts` | `updateRecordStatus` — generic admin status-update helper |
 | `lib/parse-features.ts` | `parseFeaturesInput(raw)` — textarea string → `string[]` (pure fn) |
 | `app/auth/callback/route.ts` | Email verification callback |
 | `lib/auth.ts` | `requireAuth(next?)` · `requireAdmin()` |

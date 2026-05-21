@@ -215,4 +215,4 @@ The public `/lessons` page renders the `highlighted=true` row with the existing 
 
 ## Deferred
 
-**Issue 7 — Unit + integration tests** for `parseFeaturesInput` and `setHighlighted` invariant. Deferred per PRD decision to not introduce test infrastructure in this PRD. Pick up when a second testable module appears, or when test infra is added by another initiative.
+**Issue 7 — Unit + integration tests** for `parseFeaturesInput` and `highlightPackage` invariant. Deferred per PRD decision to not introduce test infrastructure in this PRD. Pick up when a second testable module appears, or when test infra is added by another initiative.
