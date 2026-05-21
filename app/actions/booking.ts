@@ -82,5 +82,41 @@ export async function updateBookingStatus(id: string, status: BookingStatus): Pr
   if (error) return { error: '상태 업데이트 중 오류가 발생했습니다.' }
 
   revalidatePath('/admin')
+  revalidatePath('/schedule')
+  return { success: true }
+}
+
+export async function requestCancellation(id: string): Promise<BookingActionResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) return { error: '로그인이 필요합니다.' }
+
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('status, scheduled_at')
+    .eq('id', id)
+    .eq('student_id', user.id)
+    .single()
+
+  if (!booking) return { error: '예약을 찾을 수 없습니다.' }
+
+  const hoursUntil = (new Date(booking.scheduled_at).getTime() - Date.now()) / 3_600_000
+  if (hoursUntil < 24) return { error: '레슨 24시간 전까지만 취소 가능합니다.' }
+
+  if (!canTransitionTo(booking.status as BookingStatus, 'cancelled')) {
+    return { error: '취소할 수 없는 상태입니다.' }
+  }
+
+  const { error } = await supabase
+    .from('bookings')
+    .update({ status: 'cancelled' })
+    .eq('id', id)
+    .eq('student_id', user.id)
+
+  if (error) return { error: '취소 중 오류가 발생했습니다.' }
+
+  revalidatePath('/schedule')
+  revalidatePath('/admin')
   return { success: true }
 }

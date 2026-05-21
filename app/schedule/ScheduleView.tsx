@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { Calendar, Clock, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { requestCancellation } from '@/app/actions/booking'
 import { formatDateTime } from '@/lib/utils'
 import { BookingStatusBadge } from '@/components/BookingStatusBadge'
 import { DAYS, getDaysInMonth, getFirstDayOfMonth, toDateString } from '@/lib/calendar'
@@ -18,6 +19,8 @@ export function ScheduleView({ userName, bookings }: Props) {
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
   const [view, setView] = useState<'calendar' | 'list'>('calendar')
+  const [cancelErrors, setCancelErrors] = useState<Record<string, string>>({})
+  const [isPending, startTransition] = useTransition()
 
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = getFirstDayOfMonth(year, month)
@@ -130,30 +133,54 @@ export function ScheduleView({ userName, bookings }: Props) {
               </div>
             ) : (
               <div className="space-y-3">
-                {[...bookings].sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime()).map(booking => (
-                  <div key={booking.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <BookingStatusBadge status={booking.status} />
-                          <span className="font-semibold text-gray-900 dark:text-white">{booking.lessons?.name}</span>
+                {[...bookings].sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime()).map(booking => {
+                  const canCancel = booking.status === 'confirmed' || booking.status === 'pending'
+                  const cancelError = cancelErrors[booking.id]
+
+                  const handleCancel = () => {
+                    if (!window.confirm('예약을 취소하시겠습니까?')) return
+                    startTransition(async () => {
+                      const result = await requestCancellation(booking.id)
+                      if (result.error) {
+                        setCancelErrors(prev => ({ ...prev, [booking.id]: result.error! }))
+                      } else {
+                        setCancelErrors(prev => { const next = { ...prev }; delete next[booking.id]; return next })
+                      }
+                    })
+                  }
+
+                  return (
+                    <div key={booking.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <BookingStatusBadge status={booking.status} />
+                            <span className="font-semibold text-gray-900 dark:text-white">{booking.lessons?.name}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                            <Clock size={14} />
+                            {formatDateTime(booking.scheduled_at)}
+                          </div>
+                          {booking.notes && (
+                            <p className="text-xs text-gray-400 mt-1">{booking.notes}</p>
+                          )}
+                          {cancelError && (
+                            <p className="text-xs text-red-500 mt-1">{cancelError}</p>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
-                          <Clock size={14} />
-                          {formatDateTime(booking.scheduled_at)}
-                        </div>
-                        {booking.notes && (
-                          <p className="text-xs text-gray-400 mt-1">{booking.notes}</p>
+                        {canCancel && (
+                          <button
+                            onClick={handleCancel}
+                            disabled={isPending}
+                            className="shrink-0 text-xs text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isPending ? '처리중...' : '취소 요청'}
+                          </button>
                         )}
                       </div>
-                      {booking.status === 'confirmed' && (
-                        <button className="shrink-0 text-xs text-red-500 hover:text-red-600 font-medium">
-                          취소 요청
-                        </button>
-                      )}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
