@@ -1,8 +1,9 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
-import { canTransitionTo } from '@/lib/booking-status'
+import { lessonBookingStateMachine } from '@/lib/booking-status'
 import { validateBookingInput } from '@/lib/validators'
 import type { BookingStatus } from '@/lib/types'
 
@@ -58,10 +59,7 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingA
 }
 
 export async function updateBookingStatus(id: string, status: BookingStatus): Promise<BookingActionResult> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) return { error: '로그인이 필요합니다.' }
+  const { supabase } = await requireAdmin()
 
   const { data: booking } = await supabase
     .from('bookings')
@@ -70,7 +68,7 @@ export async function updateBookingStatus(id: string, status: BookingStatus): Pr
     .single()
 
   if (!booking) return { error: '예약을 찾을 수 없습니다.' }
-  if (!canTransitionTo(booking.status as BookingStatus, status)) {
+  if (!lessonBookingStateMachine.canTransitionTo(booking.status as BookingStatus, status)) {
     return { error: '허용되지 않는 상태 변경입니다.' }
   }
 
@@ -104,7 +102,7 @@ export async function requestCancellation(id: string): Promise<BookingActionResu
   const hoursUntil = (new Date(booking.scheduled_at).getTime() - Date.now()) / 3_600_000
   if (hoursUntil < 24) return { error: '레슨 24시간 전까지만 취소 가능합니다.' }
 
-  if (!canTransitionTo(booking.status as BookingStatus, 'cancelled')) {
+  if (!lessonBookingStateMachine.canTransitionTo(booking.status as BookingStatus, 'cancelled')) {
     return { error: '취소할 수 없는 상태입니다.' }
   }
 

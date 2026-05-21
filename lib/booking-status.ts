@@ -1,15 +1,31 @@
-import type { BookingStatus } from './types'
+import type { BookingStatus, PracticeBookingStatus } from './types'
 
-export const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
+export interface StateMachine<T extends string> {
+  canTransitionTo(from: T, to: T): boolean
+  getAllowedTransitions(status: T): T[]
+}
+
+export function createStateMachine<T extends string>(
+  transitions: Record<T, T[]>
+): StateMachine<T> {
+  return {
+    canTransitionTo(from, to) {
+      return transitions[from]?.includes(to) ?? false
+    },
+    getAllowedTransitions(status) {
+      return transitions[status] ?? []
+    },
+  }
+}
+
+export const lessonBookingStateMachine = createStateMachine<BookingStatus>({
   pending: ['confirmed', 'cancelled'],
   confirmed: ['cancelled'],
   cancelled: ['confirmed'],
-}
+})
 
-export function getAllowedTransitions(status: BookingStatus): BookingStatus[] {
-  return ALLOWED_TRANSITIONS[status] ?? []
-}
-
-export function canTransitionTo(from: BookingStatus, to: BookingStatus): boolean {
-  return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false
-}
+export const practiceBookingStateMachine = createStateMachine<PracticeBookingStatus>({
+  pending: ['confirmed', 'cancelled'],
+  confirmed: ['cancelled'],
+  cancelled: ['confirmed'],
+})

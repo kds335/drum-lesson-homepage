@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
 import { Resend } from 'resend'
 import type { ContactStatus } from '@/lib/types'
@@ -78,9 +79,7 @@ export async function submitContact(prevState: ContactState, formData: FormData)
 }
 
 export async function updateContactStatus(id: string, status: ContactStatus): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: '로그인이 필요합니다.' }
+  const { supabase } = await requireAdmin()
 
   const { error } = await supabase
     .from('contacts')

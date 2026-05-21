@@ -197,15 +197,13 @@ export default function ContactPage() {
           {/* Map Section */}
           <div className="space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm">
-              <iframe
-                src="https://map.naver.com/v5/search/경기 남양주시 진접읍 장현천로 62"
-                width="100%"
-                height="320"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                title="비트스튜디오 드럼교습소 위치"
-              />
+              <div className="h-64 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-indigo-950/40 dark:via-gray-800 dark:to-purple-950/40 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
+                  <MapPin className="text-indigo-600 dark:text-indigo-400" size={28} />
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">비트스튜디오 드럼교습소</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">경기 남양주시 진접읍 장현천로 62</div>
+              </div>
               <div className="p-5">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">비트스튜디오 드럼교습소</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">경기 남양주시 진접읍 장현천로 62</p>

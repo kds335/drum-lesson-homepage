@@ -1,11 +1,12 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth'
 import { revalidatePath } from 'next/cache'
-import { canTransitionTo } from '@/lib/booking-status'
+import { practiceBookingStateMachine } from '@/lib/booking-status'
 import { validatePracticeInput } from '@/lib/validators'
 import { PRACTICE_HOURLY_RATE, PRACTICE_MEMBER_DAILY_LIMIT } from '@/lib/types'
-import type { BookingStatus, PracticeBookingStatus } from '@/lib/types'
+import type { PracticeBookingStatus } from '@/lib/types'
 
 export interface CreatePracticeBookingInput {
   roomId: string
@@ -91,18 +92,7 @@ export async function updatePracticeBookingStatus(
   id: string,
   status: PracticeBookingStatus
 ): Promise<PracticeActionResult> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) return { error: '로그인이 필요합니다.' }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'admin') return { error: '권한이 없습니다.' }
+  const { supabase } = await requireAdmin()
 
   const { data: booking } = await supabase
     .from('practice_bookings')
@@ -112,7 +102,7 @@ export async function updatePracticeBookingStatus(
 
   if (!booking) return { error: '예약을 찾을 수 없습니다.' }
 
-  if (!canTransitionTo(booking.status as BookingStatus, status as BookingStatus)) {
+  if (!practiceBookingStateMachine.canTransitionTo(booking.status as PracticeBookingStatus, status)) {
     return { error: '허용되지 않는 상태 변경입니다.' }
   }
 
