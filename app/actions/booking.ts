@@ -3,15 +3,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { lessonBookingStateMachine } from '@/lib/booking-status'
-import { validateBookingInput } from '@/lib/validators'
+import { admitLessonBooking } from '@/lib/booking-intake'
 import { updateRecordStatus } from '@/lib/record-status-action'
 import type { BookingStatus } from '@/lib/types'
-
-export interface CreateBookingInput {
-  lessonId: string
-  scheduledAt: string
-  notes: string | null
-}
+import type { CreateBookingInput } from '@/lib/booking-intake'
 
 export type BookingActionResult = { error?: string; success?: boolean }
 
@@ -21,28 +16,8 @@ export async function createBooking(input: CreateBookingInput): Promise<BookingA
 
   if (!user) return { error: '로그인이 필요합니다.' }
 
-  const validation = validateBookingInput(input)
-  if (!validation.ok) return { error: validation.error }
-  const { dayOfWeek, startTime } = validation
-
-  const [{ data: slot }, { data: existing }] = await Promise.all([
-    supabase
-      .from('schedules')
-      .select('id')
-      .eq('day_of_week', dayOfWeek)
-      .eq('start_time', startTime)
-      .eq('is_available', true)
-      .maybeSingle(),
-    supabase
-      .from('bookings')
-      .select('id')
-      .eq('scheduled_at', input.scheduledAt)
-      .neq('status', 'cancelled')
-      .maybeSingle(),
-  ])
-
-  if (!slot) return { error: '선택한 시간은 예약이 불가합니다.' }
-  if (existing) return { error: '이미 예약된 시간입니다.' }
+  const admission = await admitLessonBooking({ supabase, input })
+  if (!admission.ok) return { error: admission.error }
 
   const { error } = await supabase.from('bookings').insert({
     student_id: user.id,
