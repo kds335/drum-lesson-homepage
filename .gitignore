@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# framework / session files
+.agents/
+.claude/
+skills-lock.json
+remind.md
+HANDOFF.md
