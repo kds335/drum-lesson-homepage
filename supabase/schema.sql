@@ -304,3 +304,35 @@ insert into practice_rooms (name, type) values
   ('3번 어쿠스틱', 'acoustic'),
   ('4번 어쿠스틱', 'acoustic')
 on conflict do nothing;
+
+-- ===================================================
+-- 월정액 패키지 (Monthly Packages)
+-- ===================================================
+
+-- 8. 월정액 패키지 테이블
+create table if not exists monthly_packages (
+  id uuid default gen_random_uuid() primary key,
+  name text not null unique,
+  sessions integer not null check (sessions > 0),
+  price integer not null check (price >= 0),
+  features jsonb not null default '[]',
+  highlighted boolean not null default false,
+  created_at timestamptz default now() not null
+);
+
+alter table monthly_packages enable row level security;
+
+drop policy if exists "anyone can view monthly_packages" on monthly_packages;
+create policy "anyone can view monthly_packages" on monthly_packages
+  for select using (true);
+
+drop policy if exists "admins can manage monthly_packages" on monthly_packages;
+create policy "admins can manage monthly_packages" on monthly_packages
+  for all using (get_user_role() = 'admin');
+
+-- 초기 패키지 데이터 (기존 정적 배열 반영)
+insert into monthly_packages (name, sessions, price, features, highlighted) values
+  ('베이직', 4, 280000, '["월 4회 레슨 (주 1회)", "연습실 자유 이용 (월 2회)", "기초 교재 제공", "카카오톡 상담"]', false),
+  ('스탠다드', 8, 480000, '["월 8회 레슨 (주 2회)", "연습실 자유 이용 (무제한)", "교재 제공", "녹음 파일 제공", "카카오톡 상담"]', true),
+  ('프리미엄', 12, 650000, '["월 12회 레슨 (주 3회)", "연습실 자유 이용 (무제한)", "교재 + 악보 제공", "녹음 파일 제공", "1:1 커리큘럼 설계", "우선 예약권"]', false)
+on conflict (name) do nothing;
