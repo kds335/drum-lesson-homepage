@@ -1,11 +1,11 @@
 import { requireAdmin } from '@/lib/auth'
 import { AdminDashboard } from './AdminDashboard'
-import type { Booking, Profile, PracticeBooking, Contact } from '@/lib/types'
+import type { Booking, Profile, PracticeBooking, Contact, MonthlyPackage } from '@/lib/types'
 
 export default async function AdminPage() {
   const { supabase } = await requireAdmin()
 
-  const [{ data: bookings }, { data: students }, { data: practiceBookings }, { data: contacts }] = await Promise.all([
+  const [{ data: bookings }, { data: students }, { data: practiceBookings }, { data: contacts }, { data: packages }] = await Promise.all([
     supabase
       .from('bookings')
       .select('*, profiles(id, full_name, phone, role, created_at), lessons(*)')
@@ -24,6 +24,10 @@ export default async function AdminPage() {
       .from('contacts')
       .select('id, name, phone, email, message, status, created_at')
       .order('created_at', { ascending: false }),
+    supabase
+      .from('monthly_packages')
+      .select('*')
+      .order('price'),
   ])
 
   return (
@@ -32,6 +36,7 @@ export default async function AdminPage() {
       students={(students ?? []) as Profile[]}
       practiceBookings={(practiceBookings ?? []) as PracticeBooking[]}
       contacts={(contacts ?? []) as Contact[]}
+      packages={(packages ?? []) as MonthlyPackage[]}
     />
   )
 }

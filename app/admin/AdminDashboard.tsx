@@ -1,15 +1,16 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { Users, Calendar, TrendingUp, Clock, Check, X, Search, ChevronDown, Music, MessageSquare } from 'lucide-react'
+import { useState, useTransition, useActionState, useEffect, Fragment } from 'react'
+import { Users, Calendar, TrendingUp, Clock, Check, X, Search, ChevronDown, Music, MessageSquare, Plus, Pencil, Trash2, Star } from 'lucide-react'
 import { formatDateTime, formatPrice } from '@/lib/utils'
 import { BookingStatusBadge } from '@/components/BookingStatusBadge'
 import { updateBookingStatus } from '@/app/actions/booking'
 import { updatePracticeBookingStatus } from '@/app/actions/practice'
 import { updateContactStatus } from '@/app/actions/contact'
-import { getAllowedTransitions } from '@/lib/booking-status'
+import { createPackage, updatePackage, deletePackage, setHighlightedPackage } from '@/app/actions/packages'
+import { lessonBookingStateMachine, practiceBookingStateMachine } from '@/lib/booking-status'
 import { computeBookingStats } from '@/lib/booking-stats'
-import type { Booking, Profile, BookingStatus, PracticeBooking, Contact, ContactStatus } from '@/lib/types'
+import type { Booking, Profile, BookingStatus, PracticeBooking, Contact, ContactStatus, MonthlyPackage } from '@/lib/types'
 
 const colorMap: Record<string, string> = {
   indigo: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400',
@@ -18,7 +19,7 @@ const colorMap: Record<string, string> = {
   amber: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400',
 }
 
-type Tab = 'bookings' | 'students' | 'practice' | 'contacts'
+type Tab = 'bookings' | 'students' | 'practice' | 'contacts' | 'packages'
 
 const contactStatusLabel: Record<ContactStatus, string> = {
   new: '새 문의',
@@ -42,14 +43,41 @@ interface Props {
   students: Profile[]
   practiceBookings: PracticeBooking[]
   contacts: Contact[]
+  packages: MonthlyPackage[]
 }
 
-export function AdminDashboard({ bookings, students, practiceBookings, contacts }: Props) {
+export function AdminDashboard({ bookings, students, practiceBookings, contacts, packages }: Props) {
   const [tab, setTab] = useState<Tab>('bookings')
   const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all')
   const [search, setSearch] = useState('')
   const [practiceStatusFilter, setPracticeStatusFilter] = useState<BookingStatus | 'all'>('all')
   const [isPending, startTransition] = useTransition()
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [createState, createAction, isCreatePending] = useActionState(createPackage, null)
+  const [createFormKey, setCreateFormKey] = useState(0)
+
+  useEffect(() => {
+    if (createState === 'ok') {
+      setShowCreateForm(false)
+      setCreateFormKey(k => k + 1)
+    }
+  }, [createState])
+
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [isPackagePending, startPackageTransition] = useTransition()
+  const [updateState, updateAction, isUpdatePending] = useActionState(updatePackage, null)
+  const [updateFormKey, setUpdateFormKey] = useState(0)
+
+  useEffect(() => {
+    if (updateState === 'ok') {
+      setEditingId(null)
+      setUpdateFormKey(k => k + 1)
+    }
+  }, [updateState])
+
+  useEffect(() => {
+    setUpdateFormKey(k => k + 1)
+  }, [editingId])
 
   const stats_data = computeBookingStats(bookings)
   const newContactCount = contacts.filter(c => c.status === 'new').length
@@ -139,6 +167,12 @@ export function AdminDashboard({ bookings, students, practiceBookings, contacts 
               <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold">{newContactCount}</span>
             )}
           </button>
+          <button
+            onClick={() => setTab('packages')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'packages' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+          >
+            패키지 관리
+          </button>
         </div>
 
         {tab === 'bookings' && (
@@ -204,7 +238,7 @@ export function AdminDashboard({ bookings, students, practiceBookings, contacts 
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-1.5">
-                            {getAllowedTransitions(booking.status).map(target => (
+                            {lessonBookingStateMachine.getAllowedTransitions(booking.status).map(target => (
                               target === 'confirmed' && booking.status === 'pending' ? (
                                 <button
                                   key={target}
@@ -368,7 +402,7 @@ export function AdminDashboard({ bookings, students, practiceBookings, contacts 
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-1.5">
-                            {getAllowedTransitions(b.status).map(target => (
+                            {practiceBookingStateMachine.getAllowedTransitions(b.status).map(target => (
                               target === 'confirmed' && b.status === 'pending' ? (
                                 <button
                                   key={target}
@@ -487,6 +521,244 @@ export function AdminDashboard({ bookings, students, practiceBookings, contacts 
                 <div className="text-center py-12 text-gray-400">
                   <MessageSquare size={32} className="mx-auto mb-2 opacity-30" />
                   <p className="text-sm">접수된 문의가 없습니다</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === 'packages' && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Music size={18} className="text-indigo-600 dark:text-indigo-400" />
+                <h3 className="font-semibold text-gray-900 dark:text-white">월정액 패키지 목록</h3>
+                <span className="text-sm text-gray-400">총 {packages.length}개</span>
+              </div>
+              <button
+                onClick={() => setShowCreateForm(v => !v)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
+              >
+                <Plus size={14} />
+                추가
+              </button>
+            </div>
+
+            {showCreateForm && (
+              <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
+                <form key={createFormKey} action={createAction} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">패키지명 *</label>
+                    <input
+                      name="name"
+                      type="text"
+                      required
+                      placeholder="예: 스탠다드"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">월 횟수 *</label>
+                      <input
+                        name="sessions"
+                        type="number"
+                        min={1}
+                        required
+                        placeholder="8"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">금액 (원) *</label>
+                      <input
+                        name="price"
+                        type="number"
+                        min={0}
+                        required
+                        placeholder="480000"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">혜택 (한 줄에 하나씩)</label>
+                    <textarea
+                      name="features"
+                      rows={4}
+                      placeholder={'월 8회 레슨 (주 2회)\n연습실 자유 이용 (무제한)\n교재 제공'}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                    />
+                  </div>
+                  {createState && createState !== 'ok' && (
+                    <p className="sm:col-span-2 text-sm text-red-500">{createState}</p>
+                  )}
+                  <div className="sm:col-span-2 flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={isCreatePending}
+                      className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors disabled:opacity-40"
+                    >
+                      {isCreatePending ? '저장 중...' : '저장'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateForm(false)}
+                      className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 text-sm font-medium transition-colors"
+                    >
+                      취소
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">패키지명</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">횟수</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">금액</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3 min-w-[200px]">혜택</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">인기</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">액션</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
+                  {packages.map(pkg => (
+                    <Fragment key={pkg.id}>
+                      <tr className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors ${isPackagePending ? 'opacity-60' : ''}`}>
+                        <td className="px-5 py-4 font-medium text-gray-900 dark:text-white text-sm">{pkg.name}</td>
+                        <td className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">월 {pkg.sessions}회</td>
+                        <td className="px-5 py-4 text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">{formatPrice(pkg.price)}</td>
+                        <td className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400">
+                          <ul className="space-y-0.5">
+                            {pkg.features.map((f, i) => (
+                              <li key={i} className="flex items-center gap-1.5">
+                                <span className="w-1 h-1 rounded-full bg-indigo-400 shrink-0" />
+                                {f}
+                              </li>
+                            ))}
+                          </ul>
+                        </td>
+                        <td className="px-5 py-4">
+                          <button
+                            onClick={() => {
+                              if (!pkg.highlighted) {
+                                startPackageTransition(async () => { await setHighlightedPackage(pkg.id) })
+                              }
+                            }}
+                            disabled={isPackagePending || pkg.highlighted}
+                            title={pkg.highlighted ? '현재 인기 패키지' : '인기로 설정'}
+                            className={`p-1.5 rounded-lg transition-colors ${pkg.highlighted ? 'text-yellow-500 cursor-default' : 'text-gray-300 hover:text-yellow-400 dark:text-gray-600 dark:hover:text-yellow-400'} disabled:opacity-60`}
+                          >
+                            <Star size={16} fill={pkg.highlighted ? 'currentColor' : 'none'} />
+                          </button>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setEditingId(editingId === pkg.id ? null : pkg.id)}
+                              title="수정"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (window.confirm('패키지를 삭제하시겠습니까?')) {
+                                  startPackageTransition(async () => { await deletePackage(pkg.id) })
+                                }
+                              }}
+                              disabled={isPackagePending}
+                              title="삭제"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors disabled:opacity-40"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {editingId === pkg.id && (
+                        <tr>
+                          <td colSpan={6} className="px-5 py-4 bg-indigo-50 dark:bg-indigo-900/20 border-t border-indigo-100 dark:border-indigo-800">
+                            <form key={updateFormKey} action={updateAction} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <input type="hidden" name="id" value={pkg.id} />
+                              <div>
+                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">패키지명 *</label>
+                                <input
+                                  name="name"
+                                  type="text"
+                                  required
+                                  defaultValue={pkg.name}
+                                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">월 횟수 *</label>
+                                  <input
+                                    name="sessions"
+                                    type="number"
+                                    min={1}
+                                    required
+                                    defaultValue={pkg.sessions}
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">금액 (원) *</label>
+                                  <input
+                                    name="price"
+                                    type="number"
+                                    min={0}
+                                    required
+                                    defaultValue={pkg.price}
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                  />
+                                </div>
+                              </div>
+                              <div className="sm:col-span-2">
+                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">혜택 (한 줄에 하나씩)</label>
+                                <textarea
+                                  name="features"
+                                  rows={4}
+                                  defaultValue={pkg.features.join('\n')}
+                                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                                />
+                              </div>
+                              {updateState && updateState !== 'ok' && (
+                                <p className="sm:col-span-2 text-sm text-red-500">{updateState}</p>
+                              )}
+                              <div className="sm:col-span-2 flex gap-2">
+                                <button
+                                  type="submit"
+                                  disabled={isUpdatePending}
+                                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors disabled:opacity-40"
+                                >
+                                  {isUpdatePending ? '저장 중...' : '저장'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingId(null)}
+                                  className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 text-sm font-medium transition-colors"
+                                >
+                                  취소
+                                </button>
+                              </div>
+                            </form>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+              {packages.length === 0 && (
+                <div className="text-center py-12 text-gray-400">
+                  <Music size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">패키지가 없습니다</p>
                 </div>
               )}
             </div>
