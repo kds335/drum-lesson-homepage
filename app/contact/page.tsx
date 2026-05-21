@@ -29,7 +29,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-0.5">전화번호</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">010-1234-5678</div>
+                    <div className="font-semibold text-gray-900 dark:text-white">010-7124-8504</div>
                     <div className="text-sm text-gray-400 mt-0.5">문자 상담 가능</div>
                   </div>
                 </div>
@@ -40,7 +40,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-0.5">이메일</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">beatstudio@example.com</div>
+                    <div className="font-semibold text-gray-400">준비중</div>
                   </div>
                 </div>
 
@@ -50,9 +50,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-0.5">주소</div>
-                    <div className="font-semibold text-gray-900 dark:text-white">서울시 마포구 홍익로 12</div>
-                    <div className="text-sm text-gray-400">비트스튜디오 빌딩 3층</div>
-                    <div className="text-sm text-gray-400 mt-1">우편번호: 04050</div>
+                    <div className="font-semibold text-gray-900 dark:text-white">경기 남양주시 진접읍 장현천로 62</div>
                   </div>
                 </div>
 
@@ -65,14 +63,14 @@ export default function ContactPage() {
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between gap-8">
                         <span className="text-gray-600 dark:text-gray-400">평일 (월~금)</span>
-                        <span className="font-medium text-gray-900 dark:text-white">10:00 – 22:00</span>
+                        <span className="font-medium text-gray-900 dark:text-white">09:00 – 21:00</span>
                       </div>
                       <div className="flex justify-between gap-8">
                         <span className="text-gray-600 dark:text-gray-400">토요일</span>
-                        <span className="font-medium text-gray-900 dark:text-white">10:00 – 18:00</span>
+                        <span className="font-medium text-gray-900 dark:text-white">09:00 – 21:00</span>
                       </div>
                       <div className="flex justify-between gap-8">
-                        <span className="text-gray-600 dark:text-gray-400">일요일 / 공휴일</span>
+                        <span className="text-gray-600 dark:text-gray-400">일요일</span>
                         <span className="font-medium text-red-500">휴무</span>
                       </div>
                     </div>
@@ -199,31 +197,25 @@ export default function ContactPage() {
           {/* Map Section */}
           <div className="space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm">
-              {/* Map placeholder */}
-              <div className="relative w-full h-80 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="mx-auto text-indigo-500 mb-2" size={40} />
-                  <p className="text-gray-600 dark:text-gray-400 font-medium">지도 영역</p>
-                  <p className="text-sm text-gray-400">서울시 마포구 홍익로 12</p>
-                  <p className="text-xs text-gray-400 mt-2">카카오맵 또는 네이버지도 임베드 예정</p>
-                </div>
-                {/* Grid overlay for map-like appearance */}
-                <div className="absolute inset-0 opacity-10">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="border-b border-gray-400" style={{ height: '40px' }} />
-                  ))}
-                </div>
-              </div>
+              <iframe
+                src="https://map.naver.com/v5/search/경기 남양주시 진접읍 장현천로 62"
+                width="100%"
+                height="320"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                title="비트스튜디오 드럼교습소 위치"
+              />
               <div className="p-5">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">비트스튜디오 드럼교습소</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">서울시 마포구 홍익로 12, 3층</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">경기 남양주시 진접읍 장현천로 62</p>
                 <a
-                  href="https://map.kakao.com"
+                  href="https://map.naver.com/v5/search/경기 남양주시 진접읍 장현천로 62"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-center py-2 rounded-xl border border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
                 >
-                  카카오맵에서 보기
+                  네이버 지도에서 보기
                 </a>
               </div>
             </div>
@@ -233,37 +225,13 @@ export default function ContactPage() {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-5">오시는 방법</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/40 flex items-center justify-center shrink-0 text-green-700 dark:text-green-400 font-bold text-sm">
-                    지
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white text-sm">지하철</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      2호선 홍대입구역 3번 출구 도보 5분
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0 text-blue-700 dark:text-blue-400 font-bold text-sm">
                     버
                   </div>
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white text-sm">버스</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      홍대입구역 정류장 하차<br />
-                      (5714, 6714, 271 등)
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0 text-gray-700 dark:text-gray-400 font-bold text-sm">
-                    차
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white text-sm">자가용</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      건물 지하 주차장 이용 가능<br />
-                      레슨 시 1시간 무료 주차
+                      장현농협 정류장 하차 후 도보 이동
                     </div>
                   </div>
                 </div>

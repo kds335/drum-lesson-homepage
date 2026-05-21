@@ -41,16 +41,16 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
               <li className="flex items-center gap-2">
                 <Phone size={14} className="shrink-0" />
-                010-1234-5678
+                010-7124-8504
               </li>
               <li className="flex items-start gap-2">
                 <MapPin size={14} className="shrink-0 mt-0.5" />
-                서울시 마포구 홍익로 12, 비트스튜디오 3층
+                경기 남양주시 진접읍 장현천로 62
               </li>
             </ul>
             <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-              <p>평일: 10:00 – 22:00</p>
-              <p>주말: 10:00 – 18:00</p>
+              <p>평일 · 토요일: 09:00 – 21:00</p>
+              <p>일요일: 휴무</p>
             </div>
           </div>
         </div>

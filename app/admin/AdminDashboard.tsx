@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Users, Calendar, TrendingUp, Clock, Check, X, Search, ChevronDown, Music } from 'lucide-react'
+import { Users, Calendar, TrendingUp, Clock, Check, X, Search, ChevronDown, Music, MessageSquare } from 'lucide-react'
 import { formatDateTime, formatPrice } from '@/lib/utils'
 import { BookingStatusBadge } from '@/components/BookingStatusBadge'
 import { updateBookingStatus } from '@/app/actions/booking'
 import { updatePracticeBookingStatus } from '@/app/actions/practice'
+import { updateContactStatus } from '@/app/actions/contact'
 import { getAllowedTransitions } from '@/lib/booking-status'
 import { computeBookingStats } from '@/lib/booking-stats'
-import type { Booking, Profile, BookingStatus, PracticeBooking } from '@/lib/types'
+import type { Booking, Profile, BookingStatus, PracticeBooking, Contact, ContactStatus } from '@/lib/types'
 
 const colorMap: Record<string, string> = {
   indigo: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400',
@@ -17,15 +18,33 @@ const colorMap: Record<string, string> = {
   amber: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400',
 }
 
-type Tab = 'bookings' | 'students' | 'practice'
+type Tab = 'bookings' | 'students' | 'practice' | 'contacts'
+
+const contactStatusLabel: Record<ContactStatus, string> = {
+  new: '새 문의',
+  read: '확인',
+  replied: '답변완료',
+}
+
+const contactStatusClass: Record<ContactStatus, string> = {
+  new: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400',
+  read: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400',
+  replied: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400',
+}
+
+const contactNextStatus: Partial<Record<ContactStatus, { next: ContactStatus; label: string }>> = {
+  new: { next: 'read', label: '읽음' },
+  read: { next: 'replied', label: '답변완료' },
+}
 
 interface Props {
   bookings: Booking[]
   students: Profile[]
   practiceBookings: PracticeBooking[]
+  contacts: Contact[]
 }
 
-export function AdminDashboard({ bookings, students, practiceBookings }: Props) {
+export function AdminDashboard({ bookings, students, practiceBookings, contacts }: Props) {
   const [tab, setTab] = useState<Tab>('bookings')
   const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all')
   const [search, setSearch] = useState('')
@@ -33,12 +52,14 @@ export function AdminDashboard({ bookings, students, practiceBookings }: Props) 
   const [isPending, startTransition] = useTransition()
 
   const stats_data = computeBookingStats(bookings)
+  const newContactCount = contacts.filter(c => c.status === 'new').length
 
   const stats = [
     { label: '이번 달 예약', value: String(stats_data.thisMonthCount), sub: '이번 달 전체', icon: Calendar, color: 'indigo' },
     { label: '전체 수강생', value: String(students.length), sub: '활성 수강생', icon: Users, color: 'purple' },
     { label: '이번 달 매출', value: stats_data.thisMonthRevenueFormatted, sub: '확정 레슨 기준', icon: TrendingUp, color: 'emerald' },
     { label: '대기중 예약', value: String(stats_data.pendingCount), sub: '확인 필요', icon: Clock, color: 'amber' },
+    { label: '새 문의', value: String(newContactCount), sub: '미확인 문의', icon: MessageSquare, color: 'indigo' },
   ]
 
   const handleStatusUpdate = (id: string, status: BookingStatus) => {
@@ -47,6 +68,10 @@ export function AdminDashboard({ bookings, students, practiceBookings }: Props) 
 
   const handlePracticeStatusUpdate = (id: string, status: BookingStatus) => {
     startTransition(async () => { await updatePracticeBookingStatus(id, status) })
+  }
+
+  const handleContactStatusUpdate = (id: string, status: ContactStatus) => {
+    startTransition(async () => { await updateContactStatus(id, status) })
   }
 
   const filteredPractice = practiceBookings.filter(b => {
@@ -73,7 +98,7 @@ export function AdminDashboard({ bookings, students, practiceBookings }: Props) 
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           {stats.map((stat) => (
             <div key={stat.label} className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${colorMap[stat.color]}`}>
@@ -104,6 +129,15 @@ export function AdminDashboard({ bookings, students, practiceBookings }: Props) 
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'practice' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
           >
             연습실 관리
+          </button>
+          <button
+            onClick={() => setTab('contacts')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${tab === 'contacts' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+          >
+            문의 관리
+            {newContactCount > 0 && (
+              <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold">{newContactCount}</span>
+            )}
           </button>
         </div>
 
@@ -390,6 +424,73 @@ export function AdminDashboard({ bookings, students, practiceBookings }: Props) 
               </div>
             </div>
           </>
+        )}
+
+        {tab === 'contacts' && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquare size={18} className="text-indigo-600 dark:text-indigo-400" />
+                <h3 className="font-semibold text-gray-900 dark:text-white">문의 내역</h3>
+                <span className="text-sm text-gray-400">총 {contacts.length}건</span>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">이름</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">연락처</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">이메일</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3 min-w-[200px]">문의 내용</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">상태</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">접수일</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-5 py-3">액션</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
+                  {contacts.map(contact => {
+                    const next = contactNextStatus[contact.status]
+                    return (
+                      <tr key={contact.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors ${isPending ? 'opacity-60' : ''}`}>
+                        <td className="px-5 py-4 font-medium text-gray-900 dark:text-white text-sm whitespace-nowrap">{contact.name}</td>
+                        <td className="px-5 py-4 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{contact.phone}</td>
+                        <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{contact.email ?? '-'}</td>
+                        <td className="px-5 py-4 text-sm text-gray-700 dark:text-gray-300 max-w-xs">
+                          <p className="line-clamp-2">{contact.message}</p>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${contactStatusClass[contact.status]}`}>
+                            {contactStatusLabel[contact.status]}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                          {contact.created_at.slice(0, 10)}
+                        </td>
+                        <td className="px-5 py-4">
+                          {next && (
+                            <button
+                              onClick={() => handleContactStatusUpdate(contact.id, next.next)}
+                              disabled={isPending}
+                              className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors disabled:opacity-40"
+                            >
+                              {next.label}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              {contacts.length === 0 && (
+                <div className="text-center py-12 text-gray-400">
+                  <MessageSquare size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">접수된 문의가 없습니다</p>
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
         <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5">

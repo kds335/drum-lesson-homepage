@@ -1,7 +1,9 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
 import { Resend } from 'resend'
+import type { ContactStatus } from '@/lib/types'
 
 export type ContactState = { error?: string; success?: boolean } | undefined
 
@@ -73,4 +75,20 @@ export async function submitContact(prevState: ContactState, formData: FormData)
   }
 
   return { success: true }
+}
+
+export async function updateContactStatus(id: string, status: ContactStatus): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '로그인이 필요합니다.' }
+
+  const { error } = await supabase
+    .from('contacts')
+    .update({ status })
+    .eq('id', id)
+
+  if (error) return { error: '상태 업데이트 중 오류가 발생했습니다.' }
+
+  revalidatePath('/admin')
+  return {}
 }

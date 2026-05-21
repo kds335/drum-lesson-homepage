@@ -90,3 +90,15 @@ export const PRACTICE_HOURLY_RATE = 20000
 export const PRACTICE_MEMBER_DAILY_LIMIT = 2
 export const PRACTICE_OPEN_HOUR = 9
 export const PRACTICE_CLOSE_HOUR = 21
+
+export type ContactStatus = 'new' | 'read' | 'replied'
+
+export interface Contact {
+  id: string
+  name: string
+  phone: string
+  email: string | null
+  message: string
+  status: ContactStatus
+  created_at: string
+}

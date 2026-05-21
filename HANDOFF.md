@@ -1,6 +1,6 @@
 # Handoff: 비트스튜디오 드럼교습소
 
-**Project:** `C:\Users\bgr\drum-lesson`
+**Project:** `C:\Users\bgr\homepage\1. 드럼교습소`
 **Date:** 2026-05-20
 **Branch:** main
 
@@ -8,7 +8,7 @@
 
 ## What this project is
 
-Next.js 16 drum lesson booking website for "비트스튜디오 드럼교습소". Full stack: App Router + Tailwind CSS v4 + Supabase (auth + DB). See `CLAUDE.md` and memory at `C:\Users\bgr\.claude\projects\C--Users-bgr-drum-lesson\memory\project_drum_lesson.md` for full context.
+Next.js 16 drum lesson booking website for "비트스튜디오 드럼교습소". Full stack: App Router + Tailwind CSS v4 + Supabase (auth + DB). See `CLAUDE.md` and memory at `C:\Users\bgr\.claude\projects\C--Users-bgr-homepage-1-------\memory\` for full context.
 
 ---
 

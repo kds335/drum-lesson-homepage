@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(Start-Sleep -Seconds 5)",
+      "Bash(xargs grep -l \"middleware-to-proxy\\\\|proxy\\\\|middleware\")",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/auth/login)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/auth/signup)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/lessons)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3001/booking)",
+      "Bash(curl -s -X POST http://localhost:3001/auth/login -H 'Content-Type: application/x-www-form-urlencoded' -H 'Next-Action: 1' -d 'email=test@test.com&password=test123' -w '\\\\nHTTP %{http_code}')",
+      "Bash(curl -s -o /dev/null -w \"port 3000: %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(lsof -ti:3000)",
+      "Bash(xargs kill -9)",
+      "PowerShell(netstat *)",
+      "PowerShell(taskkill *)",
+      "Bash(xargs grep -l \"redirect.*server.action\\\\|server.action.*redirect\\\\|useActionState.*redirect\")",
+      "Bash(curl *)",
+      "Bash(python3 *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git push *)",
+      "Bash(echo \"exit: $?\")",
+      "PowerShell($env:TEMP)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\bgr\\\\homepage\\\\1. 드럼교습소\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(rm \"/c/Users/bgr/homepage/1. 드럼교습소/.claude/skills/grill-me\")",
+      "Bash(ln -s \"/c/Users/bgr/homepage/1. 드럼교습소/.agents/skills/grill-me\" \"/c/Users/bgr/homepage/1. 드럼교습소/.claude/skills/grill-me\")",
+      "Bash(rm '/c/Users/bgr/homepage/1. 드럼교습소/.claude/skills/__TRACKED_VAR__')",
+      "Bash(ln -s '/c/Users/bgr/homepage/1. 드럼교습소/.agents/skills/__TRACKED_VAR__' '/c/Users/bgr/homepage/1. 드럼교습소/.claude/skills/__TRACKED_VAR__')",
+      "PowerShell(cmd /c dir \"C:\\\\Users\\\\bgr\\\\homepage\\\\1. 드럼교습소\\\\.claude\\\\skills\\\\\" /AL)",
+      "PowerShell(cmd /c dir \"C:\\\\Users\\\\bgr\\\\homepage\\\\1. 드럼교습소\\\\.claude\\\\skills\")",
+      "PowerShell(cmd /c dir \"C:\\\\Users\\\\bgr\\\\homepage\\\\1. 드럼교습소\\\\.claude\\\\skills\\\\grill-me\")",
+      "Bash(Get-Content \"C:\\\\Users\\\\bgr\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-bgr-homepage-1-------\\\\07e7e687-4a3a-4889-90cd-9d5add863229\\\\tasks\\\\b20trz3d0.output\" -Tail 20)"
+    ]
+  }
+}

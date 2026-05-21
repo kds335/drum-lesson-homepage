@@ -57,7 +57,7 @@ export default function HomePage() {
         <div className="relative max-w-6xl mx-auto px-4 py-20 text-white">
           <div className="max-w-2xl">
             <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 mb-6 animate-fade-in-up">
-              🥁 서울 마포구 No.1 드럼 교습소
+              🥁 경기 남양주시 진접읍 드럼 교습소
             </span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 animate-fade-in-up animation-delay-200">
               리듬으로 하나되는
@@ -73,7 +73,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up animation-delay-600">
               <Link
-                href="/booking"
+                href="/contact"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all hover:scale-105 shadow-lg shadow-indigo-900/50"
               >
                 무료 체험 신청하기

@@ -1,5 +1,8 @@
 # Beat Studio Drum School
 
+## Working Directory
+`C:\Users\bgr\homepage\1. 드럼교습소`
+
 ## Behavior Rules
 - State assumptions before coding; ask if uncertain
 - Implement only what was asked — no speculative features
